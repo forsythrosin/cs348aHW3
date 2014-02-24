@@ -1,0 +1,22 @@
+CS 348a Homework 3:
+-------------------
+
+-Torus Construction:
+For this part of the assignment you will be constructing a torus using OpenMesh.  There are three sections you must fill in, which are clearly marked in RenderTorus/src/main-torus.cpp.
+
+To run this code, simply navigate to the RenderTorus directory and type "make" at the command line.  To run the viewer, type:
+
+	./renderTorus
+
+-Principal Curvatures and Directions:
+For this part, you will compute principal curvatures and directions on triangle meshes using the algorithm described in Taubin's "Estimating the Tensor of Curvature of a Surface from a Polyhedral Approximation."
+
+There are three slots in need of your code, which are marked clearly.  Two are in renderMesh() in ComputeCurvature/src/main-curvature.cpp and the third is in ComputeCurvature/src/curvature.cpp.
+
+This code is designed to compile on the Myth machines.  To do so, simply type "make" at the command line from your ComputeCurvature directory.  Then, to run the viewer, type:
+
+	./drawMesh models/horse.off 
+	
+at the command line, where models/horse.off is the model you wish to use.
+
+The easiest way to get started is to write your code on a Myth machine, either in person or via SSH with X forwarding.  If you prefer to work on your personal machine, you will need to modify makefile.in to point to the proper libraries.  The CAs can help you get started.  However, we recommend that you have experience compiling and linking programs locally if you decide on the second option, as it may eat up valuable time.
