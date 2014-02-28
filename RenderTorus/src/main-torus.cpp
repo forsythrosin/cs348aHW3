@@ -4,6 +4,7 @@
 #include <OpenMesh/Core/IO/Options.hh>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <iostream>
+#include <map>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 typedef OpenMesh::TriMesh_ArrayKernelT<OpenMesh::DefaultTraits>  Mesh;
 
@@ -25,10 +26,10 @@ float shininess[] = { 50.0 };
 
 // a structure to hold a point in homogenous coordinates
 struct Point {
-	float x;
-	float y;
-	float z;
-    float w;
+  float x;
+  float y;
+  float z;
+  float w;
 };
 
 // enumerated type used to refer to the particular torus quadrant
@@ -39,6 +40,26 @@ enum torusQuadrant {
     negYposZ,
     negYnegZ
 };
+
+torusQuadrant flipZ(torusQuadrant q) {
+  switch (q)
+    {
+    case posYposZ: return posYnegZ;
+    case posYnegZ: return posYposZ;
+    case negYposZ: return negYnegZ;
+    case negYnegZ: return negYposZ;
+    }
+}
+
+torusQuadrant flipY(torusQuadrant q) {
+  switch (q)
+    {
+    case posYposZ: return negYposZ;
+    case posYnegZ: return negYnegZ;
+    case negYposZ: return posYposZ;
+    case negYnegZ: return posYnegZ;
+    }
+}
 
 // STUDENT CODE SECTION 1
 // WRITE CODE HERE TO DEFINE THE CONTROL POINTS FOR THE FOUR QUADRANTS OF THE TORUS ------------------------
@@ -160,7 +181,7 @@ Point Interpolate(float a, const Point& p1, const Point& p2)
  * corresponding point on the surface of the torus.
  */
 Point Calculate(float u, float v, int idx) {
-    
+
     // STUDENT CODE SECTION 2
     // WRITE CODE HERE TO EVALUATE THE VERTEX POSITION OF A POINT ON THE SURFACE ------------------------------
 
@@ -245,13 +266,34 @@ Mesh* generateMesh() {
         float v = (float)j/(LOD-1);
         
         for(int k = posYposZ; k <= negYnegZ; ++k) {
-          // NEED TO FILL IN DEFINITION OF Calculate(float u,float v,int idx) -----------------------
-          // calculate the point on the surface
-          Point p = Calculate(u,v,k);
-          // ----------------------------------------------------------------------------------------
+
+          // EXTRA CREDIT PART 2: removing duplicate vertices
+          // Check for duplicate point first-- one that was generated
+          // on an earlier quadrant.
+          bool altFound = false;
+          if (j == 0 || j == LOD-1) {
+            int kflip = flipZ((torusQuadrant)k);
+            if (kflip < k) {
+              vhandle[k][i][j] = vhandle[kflip][i][j];
+              altFound = true;
+            }
+          }
+          if (!altFound && (i == 0 || i == LOD-1)) {
+            int kflip = flipY((torusQuadrant)k);
+            if (kflip < k) {
+              vhandle[k][i][j] = vhandle[kflip][i][j];
+              altFound = true;
+            }
+          }
+
+          // If no duplicate found, build a new point.
+          if (!altFound) {
+            // calculate the point on the surface
+            Point p = Calculate(u,v,k);
           
-          // stores point in the appropriate 2D array of vertex handles
-          vhandle[k][i][j] = mesh->add_vertex(Mesh::Point(p.x/p.w,p.y/p.w,p.z/p.w));
+            // stores point in the appropriate 2D array of vertex handles
+            vhandle[k][i][j] = mesh->add_vertex(Mesh::Point(p.x/p.w,p.y/p.w,p.z/p.w));
+          }
         }
       }
     }
@@ -271,9 +313,8 @@ Mesh* generateMesh() {
           Mesh::VertexHandle viJ = vhandle[k][i][J];
           Mesh::VertexHandle vIJ = vhandle[k][I][J];
 
-          //Add 2 triangles to the mesh.
-          //Figured out triangle orientation through
-          //trial and error.
+          // Add 2 triangles to the mesh.
+          // EXTRA CREDIT PART 1: Draw with right orientation
           if (k == 1 || k == 2){
             face_vhandles.clear();
             face_vhandles.push_back(vij);
