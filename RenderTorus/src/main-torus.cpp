@@ -261,7 +261,7 @@ Mesh* generateMesh() {
     for (int i = 0 ; i < LOD-1; ++i) {
       for (int j = 0; j < LOD-1; ++j) {
         for (int k = posYposZ; k <= negYnegZ; ++k){
-          
+
           // STUDENT CODE SECTION 3
           // NEED TO ADD FACES TO THE MESH USING YOUR VERTEX HANDLES DEFINED IN vhandle -------------
           int I = i + 1;
@@ -272,17 +272,34 @@ Mesh* generateMesh() {
           Mesh::VertexHandle vIJ = vhandle[k][I][J];
 
           //Add 2 triangles to the mesh.
-          face_vhandles.clear();
-          face_vhandles.push_back(vij);
-          face_vhandles.push_back(vIj);
-          face_vhandles.push_back(viJ);
-          mesh->add_face(face_vhandles);
+          //Figured out triangle orientation through
+          //trial and error.
+          if (k == 1 || k == 2){
+            face_vhandles.clear();
+            face_vhandles.push_back(vij);
+            face_vhandles.push_back(vIj);
+            face_vhandles.push_back(viJ);
+            mesh->add_face(face_vhandles);
 
-          face_vhandles.clear();
-          face_vhandles.push_back(vIj);
-          face_vhandles.push_back(vIJ);
-          face_vhandles.push_back(viJ);
-          mesh->add_face(face_vhandles);
+            face_vhandles.clear();
+            face_vhandles.push_back(vIj);
+            face_vhandles.push_back(vIJ);
+            face_vhandles.push_back(viJ);
+            mesh->add_face(face_vhandles);
+          }
+          else{
+            face_vhandles.clear();
+            face_vhandles.push_back(viJ);
+            face_vhandles.push_back(vIj);
+            face_vhandles.push_back(vij);
+            mesh->add_face(face_vhandles);
+
+            face_vhandles.clear();
+            face_vhandles.push_back(viJ);
+            face_vhandles.push_back(vIJ);
+            face_vhandles.push_back(vIj);
+            mesh->add_face(face_vhandles);
+          }
           // ----------------------------------------------------------------------------------------
           
         }
