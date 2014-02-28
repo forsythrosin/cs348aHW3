@@ -69,39 +69,39 @@ Point Points[4][3][3] = {
 // Positive y and negative z quarter of torus
     {
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {R + r, 0, 0, 1},
+          {0, 0, r, 0},
+          {R - r, 0, 0, 1}
         },
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {0, -R - r, 0, 0},
+          {0, 0, 0, 0},
+          {0, -R + r, 0, 0}
         },
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {-R - r, 0, 0, 1},
+          {0, 0, r, 0},
+          {-R + r, 0, 0, 1}
         }
     },
 
 
 // Negative y and positive z quarter of torus
-	{
-        {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+    {
+      {
+          {R + r, 0, 0, 1},
+          {0, 0, -r, 0},
+          {R - r, 0, 0, 1}
         },
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {0, R + r, 0, 0},
+          {0, 0, 0, 0},
+          {0, R - r, 0, 0}
         },
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {-R - r, 0, 0, 1},
+          {0, 0, -r, 0},
+          {-R + r, 0, 0, 1}
         }
     },
 
@@ -109,19 +109,19 @@ Point Points[4][3][3] = {
 // Negative y and negative z quarter of torus
     {
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {R + r, 0, 0, 1},
+          {0, 0, -r, 0},
+          {R - r, 0, 0, 1}
         },
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {0, -R - r, 0, 0},
+          {0, 0, 0, 0},
+          {0, -R + r, 0, 0}
         },
         {
-            {0,0,0,1},
-            {0,0,0,1},
-            {0,0,0,1}
+          {-R - r, 0, 0, 1},
+          {0, 0, -r, 0},
+          {-R + r, 0, 0, 1}
         }
     }
 };
@@ -163,8 +163,6 @@ Point Calculate(float u, float v, int idx) {
     
     // STUDENT CODE SECTION 2
     // WRITE CODE HERE TO EVALUATE THE VERTEX POSITION OF A POINT ON THE SURFACE ------------------------------
-
-    idx = 0; //TODO the right thing
 
     const Point &fpprr = Points[idx][0][0];
     const Point &fpqrr = Points[idx][0][1];
