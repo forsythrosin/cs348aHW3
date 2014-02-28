@@ -1,3 +1,22 @@
+Amit Badlani
+David McLaren
+Tomas Forsyth Rosin
+CS348A HW3, Winter 2014
+
+Problem 2.
+
+The code is organized in exactly the same way as before, with all worked dumped into the main-torus.cpp file.
+
+The code works pretty much exactly as expected and is filled in where indicated. I found the first set of points for section 1 with math, then reasoned that to get points in other quadrants I could flip the Y and/or Z coordinate, and it worked. For section 2 I added an Interpolate () function and implemented the bivariate interp based on our notes. In section 3 I added pairs of triangles in the obvious way.
+
+Both sections of the extra credit are implemented. For part 1, I figured out through trial and error the correct orientations for rendering triangles to get the correct normals. For part 2, I checked if vertices with i or j = 0 or LOD-1 had already had a vertex generated in the same place, on a quadrant connected on either the Y or Z axis. I figured out that we could reuse the same i or j index, grab a vertex handle off a quadrant generated in an earlier cycle, and reuse that for the mesh. Since the duplicate vertices are no longer generated the mesh is now connected properly.
+
+Problem 4.
+
+TODO
+
+--- Begin original README ---
+
 CS 348a Homework 3:
 -------------------
 
