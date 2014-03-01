@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <GL/glut.h>
 #include <OpenMesh/Core/IO/Options.hh>
 #include <OpenMesh/Core/IO/MeshIO.hh>
@@ -461,7 +462,8 @@ void mouseMoved(int x, int y) {
 
 	if (leftDown) {
 		// Assume here that up vector is (0,1,0)
-		Vec3f newPos = curCamera - 2*(float)((float)dx/(float)windowWidth) * right + 2*(float)((float)dy/(float)windowHeight) * up;
+		Vec3f newPos = curCamera -
+	50*(float)((float)dx/(float)windowWidth) * right + 50*(float)((float)dy/(float)windowHeight) * up;
 		newPos = newPos.normalized() * curCamera.length();
 		
 		up = up - (up | newPos) * newPos / newPos.sqrnorm();
@@ -471,7 +473,7 @@ void mouseMoved(int x, int y) {
 	}
 	else if (rightDown) for (int i = 0; i < 3; i++) cameraPos[i] *= pow(1.1,dy*.1);
 	else if (middleDown) {
-		pan += -2*(float)((float)dx/(float)windowWidth) * right + 2*(float)((float)dy/(float)windowHeight) * up;
+		pan += -30*(float)((float)dx/(float)windowWidth) * right + 30*(float)((float)dy/(float)windowHeight) * up;
 	}
 	
 	lastPos[0] = x;
