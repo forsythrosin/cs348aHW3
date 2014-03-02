@@ -27,13 +27,16 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
     // In the end you need to fill in this struct
 
     // Find Nvi: normal vector at this vertex (vi). First need to find total area of adjacent faces.
-    Vec3f Nvi = mesh.normal(it.handle());
+    Vec3f mesh_Nvi = mesh.normal(it.handle());
+    Vec3f mesh_vi = mesh.point(it.handle());
+    Vector3d Nvi(mesh_Nvi[0], mesh_Nvi[1], mesh_Nvi[2]);
+    Vector3d vi(mesh_vi[0], mesh_vi[1], mesh_vi[2]);
 
-    Vec3f vi = mesh.point(it.handle());
     for(Mesh::VertexVertexIter vvit = mesh.vv_iter(it.handle()); vvit; ++vvit){
-      Vec3f vj = mesh.point(vvit.handle());
+      Vec3f mesh_vj = mesh.point(vvit.handle());
+      Vector3d vj(mesh_vj[0], mesh_vj[1], mesh_vj[2]);
       Nvi * Nvi.transpose();
-      Nvi.identity();
+      
     }
           
     CurvatureInfo info;
