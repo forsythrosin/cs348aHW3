@@ -32,18 +32,38 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
     Vector3d Nvi(mesh_Nvi[0], mesh_Nvi[1], mesh_Nvi[2]);
     Vector3d vi(mesh_vi[0], mesh_vi[1], mesh_vi[2]);
 
-    for(Mesh::VertexVertexIter vvit = mesh.vv_iter(it.handle()); vvit; ++vvit){
-      Vec3f mesh_vj = mesh.point(vvit.handle());
+    //compute total area of triangles around vi
+    double areaSum = 0;
+    for(Mesh::VertexFaceIter vfit = mesh.vf_iter(it.handle()); vfit; ++vfit){
+      areaSum += area(mesh, vfit.handle());
+    }
+
+    //compute the matrix Mvi
+    // Get the vertex-outgoing halfedges circulator of vertex _vh
+    Matrix<double, 3, 3> Mvi = Matrix<double, 3, 3>(); //TODO all zeros?
+    for(Mesh::VertexOHalfedgeIter vohit = mesh.voh_iter(it.handle()); vohit; ++vohit){
+      Mesh::VertexHandle vj_handle = mesh.to_vertex_handle(vohit.handle());
+      Vec3f mesh_vj = mesh.point(vj_handle);
       Vector3d vj(mesh_vj[0], mesh_vj[1], mesh_vj[2]);
 
-      Vector3d edge = vj-vi;
-      float Kij = 2*Nvi.transpose()*edge/edge.squaredNorm();
+      Vector3d edge = vj - vi;
+      double test = (Nvi.transpose() * edge * 2.0).norm(); //TODO sketchy
+      double Kij = test / edge.squaredNorm();
 
       Matrix<double, 3, 3> I = Matrix<double, 3, 3>::Identity();
       Vector3d Tij = (I - Nvi * Nvi.transpose()) * (vi - vj);
       Tij /= Tij.norm();
+
+      //faces on both sides of halfedge
+      Mesh::FaceHandle fh1 = mesh.face_handle(vohit.handle());
+      Mesh::FaceHandle fh2 = mesh.opposite_face_handle(vohit.handle());
+      double wij = (area(mesh, fh1) + area(mesh, fh2)) / areaSum;
+
+      Mvi += wij * Kij * Tij * Tij.transpose();
     }
-          
+
+    //TODO: get eigenstuff and put it in the right place
+    EigenSolver<Matrix<double, 3, 3> > es(Mvi, true);
     CurvatureInfo info;
     info.curvatures[0] = 0;
     info.curvatures[1] = 0;
