@@ -1,4 +1,5 @@
 #include <OpenMesh/Core/IO/Options.hh>
+#include <OpenMesh/Core/Mesh/PolyConnectivity.hh>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <iostream>
 #include <cmath>
@@ -22,6 +23,7 @@ int windowWidth = 640, windowHeight = 480;
 bool showSurface = true, showAxes = true, showCurvature = false, showNormals = false;
 
 float specular[] = { 1.0, 1.0, 1.0, 1.0 };
+float diffuse[] = {1.0,0.8,0.6,1.0};
 float shininess[] = { 50.0 };
 
 void renderMesh() {
@@ -33,7 +35,24 @@ void renderMesh() {
 	glDepthRange(0.001,1);
 	glEnable(GL_NORMALIZE);
 	
-	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH ---------------------------------------------------------
+	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH
+	// ---------------------------------------------------------
+	OpenMesh::Vec3f point, normal;
+	Mesh::FaceIter f_it, f_end(mesh.faces_end());
+	glBegin(GL_TRIANGLES);
+	for (f_it = mesh.faces_begin(); f_it != f_end; ++f_it){
+	  Mesh::FaceHandle fh = f_it.handle();
+	  Mesh::FaceVertexIter fv_it;
+	  for (fv_it = mesh.fv_iter(fh); fv_it;
+        ++fv_it) {
+	    Mesh::VertexHandle vh = fv_it.handle();
+	    normal = mesh.normal(vh);
+	    glNormal3f(normal.values_[0], normal.values_[1], normal.values_[2]);
+	    point = mesh.point(vh);
+	    glVertex3f(point.values_[0], point.values_[1], point.values_[2]);
+	  }
+	}
+	glEnd();
 	
 	// -------------------------------------------------------------------------------------------------------------
 	
@@ -44,7 +63,26 @@ void renderMesh() {
 	
 	if (showCurvature) {
 		// WRITE CODE HERE TO RENDER THE PRINCIPAL DIRECTIONS YOU COMPUTED ---------------------------------------------
+	        glBegin(GL_LINES);
+		for (Mesh::ConstVertexIter it = mesh.vertices_begin(); it
+		       != mesh.vertices_end(); ++it){
+		       CurvatureInfo info = mesh.property(curvature, it);
+		       Vec3f p = mesh.point(it.handle()),
+			 d1 = info.directions[0],
+			 d2 = info.directions[1];
+		       float k1 = info.curvatures[0],
+			 k2 = info.curvatures[1];
+		       Vec3f p1 = p + k1 * d1,
+			 p2 = p + k2 * d2;
 
+		       glColor3f(0,0,1); // maximum curvature direction
+		       glVertex3f(p[0],p[1],p[2]);
+		       glVertex3f(p1[0],p1[1],p1[2]);
+		       glColor3f(1,0,0); // minimum curvature direction
+		       glVertex3f(p[0],p[1],p[2]);
+		       glVertex3f(p2[0],p2[1],p2[2]);
+		}
+		glEnd();
 		// -------------------------------------------------------------------------------------------------------------
 	}
 	
@@ -76,6 +114,7 @@ void display() {
 	glEnable(GL_LIGHTING);
 	glShadeModel(GL_SMOOTH);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
 	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 	glEnable(GL_LIGHT0);
 
@@ -125,7 +164,7 @@ void mouseMoved(int x, int y) {
 
 	if (leftDown) {
 		// Assume here that up vector is (0,1,0)
-		Vec3f newPos = curCamera - 2*(float)((float)dx/(float)windowWidth) * right + 2*(float)((float)dy/(float)windowHeight) * up;
+		Vec3f newPos = curCamera - 30*(float)((float)dx/(float)windowWidth) * right + 30*(float)((float)dy/(float)windowHeight) * up;
 		newPos = newPos.normalized() * curCamera.length();
 		
 		up = up - (up | newPos) * newPos / newPos.sqrnorm();
@@ -135,7 +174,7 @@ void mouseMoved(int x, int y) {
 	}
 	else if (rightDown) for (int i = 0; i < 3; i++) cameraPos[i] *= pow(1.1,dy*.1);
 	else if (middleDown) {
-		pan += -2*(float)((float)dx/(float)windowWidth) * right + 2*(float)((float)dy/(float)windowHeight) * up;
+		pan += -30*(float)((float)dx/(float)windowWidth) * right + 30*(float)((float)dy/(float)windowHeight) * up;
 	}
 
 	
