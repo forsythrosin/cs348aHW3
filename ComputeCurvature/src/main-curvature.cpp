@@ -1,5 +1,6 @@
 #include <OpenMesh/Core/IO/Options.hh>
 #include <OpenMesh/Core/IO/MeshIO.hh>
+#include <OpenMesh/Core/Mesh/PolyConnectivity.hh>
 #include <iostream>
 #include <cmath>
 #include <cstdio>
@@ -34,7 +35,20 @@ void renderMesh() {
 	glEnable(GL_NORMALIZE);
 	
 	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH ---------------------------------------------------------
-	
+        for (Mesh::FaceIter fit = mesh.faces_begin(); fit != mesh.faces_end(); ++fit) {
+          glBegin(GL_TRIANGLES);
+          Mesh::FaceHandle fh = fit.handle();
+          OpenMesh::Vec3f nf = mesh.normal(fh);
+          Mesh::FaceVertexIter fvit = mesh.fv_iter(fh);
+          while (fvit){
+            OpenMesh::Vec3f p = mesh.point(fvit.handle());
+            OpenMesh::Vec3f n = mesh.normal(fvit.handle());
+            glVertex3f(p.values_[0], p.values_[1], p.values_[2]);
+            glNormal3f(nf.values_[0], nf.values_[1], nf.values_[2]);
+            ++fvit;
+          }
+          glEnd();
+        }
 	// -------------------------------------------------------------------------------------------------------------
 	
 	if (!showSurface) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
