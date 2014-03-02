@@ -23,6 +23,8 @@ int windowWidth = 640, windowHeight = 480;
 bool showSurface = true, showAxes = true, showCurvature = false, showNormals = false;
 
 float specular[] = { 1.0, 1.0, 1.0, 1.0 };
+float diffuse[] = { 0.8, 0.8, 0.8, 1.0 };
+float ambient[] = { 0.1, 0.1, 0.1, 1.0 };
 float shininess[] = { 50.0 };
 
 void renderMesh() {
@@ -38,13 +40,12 @@ void renderMesh() {
         for (Mesh::FaceIter fit = mesh.faces_begin(); fit != mesh.faces_end(); ++fit) {
           glBegin(GL_TRIANGLES);
           Mesh::FaceHandle fh = fit.handle();
-          OpenMesh::Vec3f nf = mesh.normal(fh);
           Mesh::FaceVertexIter fvit = mesh.fv_iter(fh);
           while (fvit){
             OpenMesh::Vec3f p = mesh.point(fvit.handle());
             OpenMesh::Vec3f n = mesh.normal(fvit.handle());
-            glVertex3f(p.values_[0], p.values_[1], p.values_[2]);
-            glNormal3f(nf.values_[0], nf.values_[1], nf.values_[2]);
+            glNormal3f(n[0], n[1], n[2]);
+            glVertex3f(p[0], p[1], p[2]);
             ++fvit;
           }
           glEnd();
@@ -86,9 +87,12 @@ void display() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
+        glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glShadeModel(GL_SMOOTH);
+        glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
 	glEnable(GL_LIGHT0);
