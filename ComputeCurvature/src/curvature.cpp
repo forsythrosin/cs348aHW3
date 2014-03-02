@@ -32,12 +32,14 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
     Vector3d Nvi(mesh_Nvi[0], mesh_Nvi[1], mesh_Nvi[2]);
     Vector3d vi(mesh_vi[0], mesh_vi[1], mesh_vi[2]);
 
+    Vector3d Tij = Vector3d(0, 0, 0);
     for(Mesh::VertexVertexIter vvit = mesh.vv_iter(it.handle()); vvit; ++vvit){
       Vec3f mesh_vj = mesh.point(vvit.handle());
       Vector3d vj(mesh_vj[0], mesh_vj[1], mesh_vj[2]);
-      Nvi * Nvi.transpose();
-      
+      Matrix<double, 3, 3> I = Matrix<double, 3, 3>::Identity();
+      Tij += (I - Nvi * Nvi.transpose()) * (vi - vj);
     }
+    Tij /= Tij.norm();
           
     CurvatureInfo info;
     info.curvatures[0] = 0;
