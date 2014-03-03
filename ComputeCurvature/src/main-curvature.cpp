@@ -68,19 +68,22 @@ void renderMesh() {
 		       != mesh.vertices_end(); ++it){
 		       CurvatureInfo info = mesh.property(curvature, it);
 		       Vec3f p = mesh.point(it.handle()),
-			 d1 = info.directions[0],
-			 d2 = info.directions[1];
+			 d1 = info.directions[0].normalized(),
+			 d2 = info.directions[1].normalized();
 		       float k1 = info.curvatures[0],
 			 k2 = info.curvatures[1];
-		       Vec3f p1 = p + k1 * d1,
-			 p2 = p + k2 * d2;
+		       float vecLength = 0.02f;
+		       Vec3f p10 = p - vecLength/2 * d1,
+			 p11 = p + vecLength/2 * d1,
+			 p20 = p - vecLength/2 * d2,
+			 p21 = p + vecLength/2 * d2;
 
 		       glColor3f(0,0,1); // maximum curvature direction
-		       glVertex3f(p[0],p[1],p[2]);
-		       glVertex3f(p1[0],p1[1],p1[2]);
+		       glVertex3f(p10[0],p10[1],p10[2]);
+		       glVertex3f(p11[0],p11[1],p11[2]);
 		       glColor3f(1,0,0); // minimum curvature direction
-		       glVertex3f(p[0],p[1],p[2]);
-		       glVertex3f(p2[0],p2[1],p2[2]);
+		       glVertex3f(p20[0],p20[1],p20[2]);
+		       glVertex3f(p21[0],p21[1],p21[2]);
 		}
 		glEnd();
 		// -------------------------------------------------------------------------------------------------------------
@@ -126,7 +129,7 @@ void display() {
 	glViewport(0,0,windowWidth,windowHeight);
 	
 	float ratio = (float)windowWidth / (float)windowHeight;
-	gluPerspective(50, ratio, 1, 1000); // 50 degree vertical viewing angle, zNear = 1, zFar = 1000
+	gluPerspective(50, ratio, 0.1, 1000); // 50 degree vertical viewing angle, zNear = 0.1, zFar = 1000
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

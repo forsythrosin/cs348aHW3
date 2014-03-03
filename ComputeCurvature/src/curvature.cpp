@@ -21,8 +21,6 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
 
   for (Mesh::VertexIter it = mesh.vertices_begin(); it != mesh.vertices_end(); ++it) {
     // WRITE CODE HERE TO COMPUTE THE CURVATURE AT THE CURRENT VERTEX ----------------------------------------------
-    Vec3f normal = mesh.normal(it.handle());
-    Vector3d N(normal[0],normal[1],normal[2]); // example of converting to Eigen's vector class for easier math
 
     // In the end you need to fill in this struct
 
@@ -40,35 +38,64 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
 
     //compute the matrix Mvi
     // Get the vertex-outgoing halfedges circulator of vertex _vh
-    Matrix<double, 3, 3> Mvi = Matrix<double, 3, 3>(); //TODO all zeros?
+    Matrix3d Mvi = Matrix3d::Zero();
     for(Mesh::VertexOHalfedgeIter vohit = mesh.voh_iter(it.handle()); vohit; ++vohit){
       Mesh::VertexHandle vj_handle = mesh.to_vertex_handle(vohit.handle());
       Vec3f mesh_vj = mesh.point(vj_handle);
       Vector3d vj(mesh_vj[0], mesh_vj[1], mesh_vj[2]);
 
+      // Calculate Kij
       Vector3d edge = vj - vi;
-      double test = (Nvi.transpose() * edge * 2.0).norm(); //TODO sketchy
-      double Kij = test / edge.squaredNorm();
+      double Kij = 2.0 * Nvi.transpose() * edge;
+      Kij /= edge.squaredNorm();
 
-      Matrix<double, 3, 3> I = Matrix<double, 3, 3>::Identity();
+      // Calculate Tij
+      Matrix3d I = Matrix3d::Identity();
       Vector3d Tij = (I - Nvi * Nvi.transpose()) * (vi - vj);
-      Tij /= Tij.norm();
+      Tij.normalize();
 
+      // Calculate wij
       //faces on both sides of halfedge
       Mesh::FaceHandle fh1 = mesh.face_handle(vohit.handle());
       Mesh::FaceHandle fh2 = mesh.opposite_face_handle(vohit.handle());
-      double wij = (area(mesh, fh1) + area(mesh, fh2)) / areaSum;
+      double wij = (area(mesh, fh1) + area(mesh, fh2)) / (2 * areaSum);
 
       Mvi += wij * Kij * Tij * Tij.transpose();
     }
 
     //TODO: get eigenstuff and put it in the right place
-    EigenSolver<Matrix<double, 3, 3> > es(Mvi, true);
+    EigenSolver<Matrix3d> es(Mvi, true);
+
+    Vector3d eVec1 = es.pseudoEigenvectors().block(0,0,3,1),
+      eVec2 = es.pseudoEigenvectors().block(0,1,3,1),
+      eVec3 = es.pseudoEigenvectors().block(0,2,3,1);
+
+    double eVal1 = real(es.eigenvalues()(0)),
+      eVal2 = real(es.eigenvalues()(1)),
+      eVal3 = real(es.eigenvalues()(2));
+
+    // Find which eigenvector is Nvi
+    float thresh = 0.0001;
+    if (abs(Nvi.dot(eVec1.normalized())) > thresh) {
+      // eVec1 == Nvi
+      std::cout << "eVec1 = Nvi" << std::endl;
+    } else if (abs(Nvi.dot(eVec2.normalized())) > thresh) {
+      // eVec2 == Nvi
+      std::cout << "eVec2 = Nvi" << std::endl;
+    } else if (abs(Nvi.dot(eVec3.normalized())) > thresh) {
+      // eVec3 == Nvi
+      std::cout << "eVec3 = Nvi" << std::endl;
+    } else {
+      // Nvi not an eigenvector => too high threshold
+      std::cout << "Nvi not found in eigenvectors" << std::endl;
+    }
+
+    //TODO: Assign curvatures and directions
     CurvatureInfo info;
-    info.curvatures[0] = 0;
-    info.curvatures[1] = 0;
-    info.directions[0] = Vec3f();
-    info.directions[1] = Vec3f();
+    info.curvatures[0] = 1;
+    info.curvatures[1] = 1;
+    info.directions[0] = Vec3f(1,0,0);
+    info.directions[1] = Vec3f(0,0,1);
 
     mesh.property(curvature,it) = info;
     // -------------------------------------------------------------------------------------------------------------
