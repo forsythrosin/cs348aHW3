@@ -77,11 +77,15 @@ void renderMesh() {
 			 p11 = p + vecLength/2 * d1,
 			 p20 = p - vecLength/2 * d2,
 			 p21 = p + vecLength/2 * d2;
+                       /*Vec3f p10 = p - vecLength/2 * d1,
+			 p11 = p + vecLength/2 * d1,
+			 p20 = p - (k2/k1)*vecLength/2 * d2,
+			 p21 = p + (k2/k1)*vecLength/2 * d2;*/
 
-		       glColor3f(0,0,1); // maximum curvature direction
+		       glColor3f(1,0,0); // maximum curvature direction
 		       glVertex3f(p10[0],p10[1],p10[2]);
 		       glVertex3f(p11[0],p11[1],p11[2]);
-		       glColor3f(1,0,0); // minimum curvature direction
+		       glColor3f(0,0,1); // minimum curvature direction
 		       glVertex3f(p20[0],p20[1],p20[2]);
 		       glVertex3f(p21[0],p21[1],p21[2]);
 		}

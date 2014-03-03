@@ -4,6 +4,10 @@
 using namespace OpenMesh;
 using namespace Eigen;
 
+using namespace std;
+
+const double EPSILON = 0.00001;
+
 // Returns area of given face on mesh. It's assumed it's a triangle.
 double area(Mesh &mesh, FaceHandle fh) {
   //http://math.stackexchange.com/questions/128991/how-to-calculate-area-of-3d-triangle
@@ -21,12 +25,13 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
 
   for (Mesh::VertexIter it = mesh.vertices_begin(); it != mesh.vertices_end(); ++it) {
     // WRITE CODE HERE TO COMPUTE THE CURVATURE AT THE CURRENT VERTEX ----------------------------------------------
+    Mesh::VertexHandle vi_handle = it.handle();
 
     // In the end you need to fill in this struct
 
     // Find Nvi: normal vector at this vertex (vi). First need to find total area of adjacent faces.
-    Vec3f mesh_Nvi = mesh.normal(it.handle());
-    Vec3f mesh_vi = mesh.point(it.handle());
+    Vec3f mesh_Nvi = mesh.normal(vi_handle);
+    Vec3f mesh_vi = mesh.point(vi_handle);
     Vector3d Nvi(mesh_Nvi[0], mesh_Nvi[1], mesh_Nvi[2]);
     Vector3d vi(mesh_vi[0], mesh_vi[1], mesh_vi[2]);
 
@@ -38,9 +43,11 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
 
     //compute the matrix Mvi
     // Get the vertex-outgoing halfedges circulator of vertex _vh
+    double wijSum = 0;
     Matrix3d Mvi = Matrix3d::Zero();
     for(Mesh::VertexOHalfedgeIter vohit = mesh.voh_iter(it.handle()); vohit; ++vohit){
       Mesh::VertexHandle vj_handle = mesh.to_vertex_handle(vohit.handle());
+      assert(vj_handle != vi_handle);
       Vec3f mesh_vj = mesh.point(vj_handle);
       Vector3d vj(mesh_vj[0], mesh_vj[1], mesh_vj[2]);
 
@@ -58,44 +65,75 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
       //faces on both sides of halfedge
       Mesh::FaceHandle fh1 = mesh.face_handle(vohit.handle());
       Mesh::FaceHandle fh2 = mesh.opposite_face_handle(vohit.handle());
+      assert (fh1 != fh2);
       double wij = (area(mesh, fh1) + area(mesh, fh2)) / (2 * areaSum);
+      wijSum += wij;
 
-      Mvi += wij * Kij * Tij * Tij.transpose();
+      Mvi += Tij * Tij.transpose() * wij * Kij;
     }
+    assert(wijSum - 1.0 < EPSILON);
 
-    //TODO: get eigenstuff and put it in the right place
+    //get eigenstuff
     EigenSolver<Matrix3d> es(Mvi, true);
 
-    Vector3d eVec1 = es.pseudoEigenvectors().block(0,0,3,1),
-      eVec2 = es.pseudoEigenvectors().block(0,1,3,1),
-      eVec3 = es.pseudoEigenvectors().block(0,2,3,1);
+    //TODO: check that there are no complex parts
+    assert (abs(imag(es.eigenvalues()[0]) < EPSILON));
 
-    double eVal1 = real(es.eigenvalues()(0)),
-      eVal2 = real(es.eigenvalues()(1)),
-      eVal3 = real(es.eigenvalues()(2));
+    //Find the bigger, smaller, and 0 eigenvalue, and make those T1, T2, N
+    int i_t1 = 0, i_t2 = 1, i_n = 2;
+    double eVals[3] = {abs(real(es.eigenvalues()[0])),
+                       abs(real(es.eigenvalues()[1])),
+                       abs(real(es.eigenvalues()[2]))};;
+    if (eVals[0] < eVals[1] && eVals[0] < eVals[2]){
+      assert (eVals[0] < EPSILON); //It's the zero
+      i_n = 0;
 
-    // Find which eigenvector is Nvi
-    float thresh = 0.0001;
-    if (abs(Nvi.dot(eVec1.normalized())) > thresh) {
-      // eVec1 == Nvi
-      std::cout << "eVec1 = Nvi" << std::endl;
-    } else if (abs(Nvi.dot(eVec2.normalized())) > thresh) {
-      // eVec2 == Nvi
-      std::cout << "eVec2 = Nvi" << std::endl;
-    } else if (abs(Nvi.dot(eVec3.normalized())) > thresh) {
-      // eVec3 == Nvi
-      std::cout << "eVec3 = Nvi" << std::endl;
-    } else {
-      // Nvi not an eigenvector => too high threshold
-      std::cout << "Nvi not found in eigenvectors" << std::endl;
+      if (eVals[1] > eVals[2]) {
+        i_t1 = 1;
+        i_t2 = 2;
+      }
+      else {
+        i_t1 = 2;
+        i_t2 = 1;
+      }
+    }
+    else if(eVals[1] < eVals[0] && eVals[1] < eVals[2]) {
+      assert (eVals[1] < EPSILON); //It's the zero
+      i_n = 1;
+
+      if (eVals[0] > eVals[2]) {
+        i_t1 = 0;
+        i_t2 = 2;
+      }
+      else {
+        i_t1 = 2;
+        i_t2 = 0;
+      }
+    }
+    else {
+      assert (eVals[2] < EPSILON); //It's the zero
+      i_n = 2;
+
+      if (eVals[1] > eVals[0]) {
+        i_t1 = 1;
+        i_t2 = 0;
+      }
+      else {
+        i_t1 = 0;
+        i_t2 = 1;
+      }
     }
 
-    //TODO: Assign curvatures and directions
+    //Assign curvatures and directions
     CurvatureInfo info;
-    info.curvatures[0] = 1;
-    info.curvatures[1] = 1;
-    info.directions[0] = Vec3f(1,0,0);
-    info.directions[1] = Vec3f(0,0,1);
+    info.curvatures[0] = eVals[i_t1];
+    info.curvatures[1] = eVals[i_t2];
+    info.directions[0] = Vec3f(real((es.eigenvectors().col(i_t1))[0]),
+                               real((es.eigenvectors().col(i_t1))[1]),
+                               real((es.eigenvectors().col(i_t1))[2]));
+    info.directions[1] = Vec3f(real((es.eigenvectors().col(i_t2))[0]),
+                               real((es.eigenvectors().col(i_t2))[1]),
+                               real((es.eigenvectors().col(i_t2))[2]));
 
     mesh.property(curvature,it) = info;
     // -------------------------------------------------------------------------------------------------------------
